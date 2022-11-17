@@ -40,4 +40,4 @@ class Ui_AttachWindow(object):
         AttachWindow.setWindowTitle(_translate("AttachWindow", "进程注入"))
         self.pushButton.setText(_translate("AttachWindow", "注入"))
         self.label.setText(_translate("AttachWindow", "进程PID:"))
-        self.lineEdit.setText(_translate("AttachWindow", "23072"))
+        self.lineEdit.setText(_translate("AttachWindow", "11804"))

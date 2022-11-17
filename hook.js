@@ -75,7 +75,9 @@ Interceptor.attach(Module.findExportByName("ws2_32.dll", "WSASend"), {
         // console.log("data:",buf2hex(data));
         // send("wsa_send",data=data);
         send({
-            type:"wsa_send",
+            fd:args[0].toString(),
+            type:"send",
+            func:"wsa_send",
             data:buf2hex(data)
         });
     }

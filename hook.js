@@ -27,11 +27,15 @@
 // console.log(p);
 // const f = new NativeFunction(p, 'bool', ['pointer','pointer']);
 // f(ptr(parseInt("0x5d041a",16)),st);
-var buf2hex = function (buffer) {
-	return Array.prototype.map.call(new Uint8Array(buffer), function(x){ return ('00' + x.toString(16)).slice(-2)} ).join(' ');
+var buf2hex = function (buffer,split_flag='') {
+	return Array.prototype.map.call(new Uint8Array(buffer), function(x){ return ('00' + x.toString(16)).slice(-2)} ).join(split_flag);
 }
 var buf2hex_little_end= function (buffer,split_flag='') {
 	return Array.prototype.map.call(new Uint8Array(buffer), function(x){ return ('00' + x.toString(16)).slice(-2)} ).reverse().join(split_flag);
+}
+
+var buf2dec= function (buffer,split_flag='') {
+	return Array.prototype.map.call(new Uint8Array(buffer), function(x){ return (x.toString(10))} ).join(split_flag);
 }
 Interceptor.attach(Module.findExportByName("ws2_32.dll", "send"), {
     onEnter: function(args) {
@@ -62,7 +66,7 @@ Interceptor.attach(Module.findExportByName("ws2_32.dll", "WSASend"), {
         // var len = parseInt(len_hex,16);
 
         var len = lpBuffers.readUInt();
-        console.log("len",len);
+        // console.log("len",len);
         
         // var buf = Memory.readByteArray(ptr(lpBuffers.add(4)), 4);
         // var buf_ptr = buf2hex_little_end(buf,'');
@@ -74,11 +78,49 @@ Interceptor.attach(Module.findExportByName("ws2_32.dll", "WSASend"), {
         var data = Memory.readByteArray(buf_ptr, len);
         // console.log("data:",buf2hex(data));
         // send("wsa_send",data=data);
+        var from = getSocktName(args[0].toInt32());
+        var to = getPeerName(args[0].toInt32());
+        // console.log("len",len,len.toString());
         send({
-            fd:args[0].toString(),
-            type:"send",
+            fd:args[0].toString(10),
+            type:"发送",
             func:"wsa_send",
-            data:buf2hex(data)
+            from:from,
+            to:to,
+            len:len.toString(),
+            data:buf2hex(data,' ')
         });
     }
 });
+const getsockname = Module.findExportByName("ws2_32.dll", "getsockname");
+const getpeername = Module.findExportByName("ws2_32.dll", "getpeername");
+// console.log(getsockname);
+const getsocknamePtr = new NativeFunction(getsockname, 'int', ['int','pointer','pointer']);
+const getpeernamePtr = new NativeFunction(getpeername, 'int', ['int','pointer','pointer']);
+
+var getPeerName = function(fd) {
+    var sockaddr = Memory.alloc(16);
+    var len = Memory.alloc(4);
+    len.writeInt(16);
+    getpeernamePtr(fd,sockaddr,len);
+    // var buf = sockaddr.readByteArray(16);
+    // console.log("buf:",buf);
+    // var family = sockaddr.readShort();
+    var port = parseInt(buf2hex((sockaddr.add(2)).readByteArray(2)),16);
+    var address = buf2dec((sockaddr.add(4)).readByteArray(4),'.');
+    // console.log("res:",family,port,port2,address);
+    return address+":"+port;
+};
+var getSocktName = function(fd){
+    var sockaddr = Memory.alloc(16);
+    var len = Memory.alloc(4);
+    len.writeInt(16);
+    getsocknamePtr(fd,sockaddr,len);
+    // var buf = sockaddr.readByteArray(16);
+    // console.log("buf:",buf);
+    // var family = sockaddr.readShort();
+    var port = parseInt(buf2hex((sockaddr.add(2)).readByteArray(2)),16);
+    var address = buf2dec((sockaddr.add(4)).readByteArray(4),'.');
+    // console.log("res:",family,port,port2,address);
+    return address+":"+port;
+};

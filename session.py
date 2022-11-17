@@ -23,6 +23,7 @@ class Session:
             payload = message['payload']
             # _,payload = message
             print('['+payload['type']+']:','[data]:',payload['data'])
+            print('from:',payload['from'],'to:',payload['to'],'fd:',payload['fd'])
         else:
             print("[on_message] message:", message, "data:", data)
 
@@ -33,6 +34,7 @@ class Session:
         print("start hook")
         # self.stop_event = threading.Event()
         self.script = self.session.create_script(self.source)
+        # self.script.on('message', self.on_message)
         self.script.on('message', callback)
         self.t = threading.Thread(target=self.hook,args=())
         self.started = True
@@ -43,15 +45,18 @@ class Session:
         self.started = False
         self.script.unload()
 
-import socket 
-newsock = socket.socket(fileno=1912)
-print(newsock)
+# import socket 
+# newsock = socket.socket(fileno=1912)
+# print(newsock)
 # socket.AddressInfo
 
 # sys.stdin.read()
-# session = Session(23072)
-# session.run_hook()
 
-# time.sleep(5)
+
+
+# session = Session(11804)
+# session.run_hook(None)
+
+# time.sleep(8)
 # print("stop hook")
 # session.stop_hook()
